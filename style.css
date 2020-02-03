@@ -1,0 +1,16 @@
+
+#messages .list-group-item {
+background-color:#EEE;
+margin-top:10px;
+margin-bottom:20px;
+margin-right:100px;
+}
+#messages .list-group-item.me {
+text-align:right;
+background-color:#CCD;
+margin-right:0px;
+margin-left:100px;
+}
+#messages .text-muted {
+    font-size: 11px;
+}
