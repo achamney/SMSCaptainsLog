@@ -18,7 +18,7 @@ function send() {
             type: 'post',
             data: JSON.stringify(data),
             headers: {
-                "Authorization": 'key='+key,
+                "Authorization": 'key=' + key,
                 "Content-Type": "application/json"
             },
             contentType: "application/json; charset=utf-8",
@@ -38,31 +38,75 @@ $(function () {
             var fst;
             window.phoneData = data;
             phoneList.empty();
+            var dataArray = [];
             for (var num in data) {
-                if (!fst) {
+                dataArray.push({ num: num, messages: data[num] });
+            }
+            dataArray.sort((a, b) => sortMsgs(a, b));
+            for (var numMsg of dataArray) {
+                var messages = numMsg.messages;
+                var num = numMsg.num;
+                if (!fst && messages instanceof Array) {
                     fst = num;
                 }
-                createPhoneNum(num, phoneList);
+                if (messages instanceof Array) {
+                    createPhoneNum(num, phoneList);
+                }
             }
             if (first) {
                 setActive(fst, data[fst]);
+            } else {
+                styleActiveNumber(activePhone);
             }
             makeMessages(data[window.activePhone]);
+            if (first) {
+                var messageContainer = $("#messages");
+                messageContainer.scrollTop(messageContainer.prop("scrollHeight"));
+            }
         });
     }
+    function sortMsgs(a, b) {
+        if (!(a.messages instanceof Array) || !(b.messages instanceof Array)
+            || a.messages.length == 0 || b.messages.length == 0)
+            return 0;
+        return a.messages[a.messages.length - 1].Date < b.messages[b.messages.length - 1].Date ?
+            1 :
+            -1
+    }
     function createPhoneNum(num, phoneList) {
-        var phonenum = $(`<button class="list-group-item">${num}</button>`).appendTo(phoneList);
+        var label = num;
+        if (window.phoneData[num + "name"]) {
+            label = window.phoneData[num + "name"];
+        }
+        var phonenum = $(`<button class="list-group-item" data-id="${num}">
+            ${label}
+            <i class="fa fa-pencil" onclick="editName('${num}')"></i>
+            </button>`)
+            .appendTo(phoneList);
         phonenum.click(function () {
             setActive(num, window.phoneData[num]);
         });
     }
     function setActive(num, messages) {
+        styleActiveNumber(num);
         window.activePhone = num;
-        $("#activeNumLabel").html(num);
+        var label = num;
+        if (window.phoneData[num + "name"]) {
+            label = window.phoneData[num + "name"];
+        }
+        $("#activeNumLabel").html(label);
         makeMessages(messages);
+        var messageContainer = $("#messages");
+        messageContainer.scrollTop(messageContainer.prop("scrollHeight"));
+    }
+    function styleActiveNumber(num) {
+        $('#phoneList .list-group-item').removeClass("active")
+        var activePhoneItem = $(`#phoneList .list-group-item[data-id='${num}']`);
+        activePhoneItem.addClass("active");
     }
     function makeMessages(messages) {
         var messageList = $("#messages");
+
         if (messages) {
             messageList.empty();
             for (var msg of messages) {
@@ -97,7 +141,12 @@ function createMessage(messageList, msg) {
 }
 function createNewPhone() {
     var newPhoneNumber = $("#newPhone").val();
-    window.phoneData[newPhoneNumber] = [];
+    if (window.editPhone) {
+        window.phoneData[window.editPhone + "name"] = newPhoneNumber;
+        window.editPhone = false;
+    } else {
+        window.phoneData[newPhoneNumber] = [];
+    }
     $.ajax({
         url: "https://api.myjson.com/bins/wm3k2",
         type: "PUT",
@@ -108,6 +157,13 @@ function createNewPhone() {
             location.reload();
         }
     });
+}
+function editName(num) {
+    var phoneinput = $("#newPhone");
+    phoneinput.focus();
+    phoneinput.val("Give Me A Name");
+    $("#addButton").html("Save");
+    window.editPhone = num;
 }
 function timeSince(date) {
 

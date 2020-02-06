@@ -1,4 +1,17 @@
-
+html {
+    overflow: hidden;
+}
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    box-shadow: -8px 0px 8px 0px #999
+}
+#messages {
+    overflow: auto;
+    margin-right: 15px;
+    padding-right:5px;
+}
 #messages .list-group-item {
 background-color:#EEE;
 margin-top:10px;
@@ -13,4 +26,15 @@ margin-left:100px;
 }
 #messages .text-muted {
     font-size: 11px;
+}
+.sendBtn {
+    width: calc(100% - 15px);
+}
+.leftCol {
+    background-color:#DDD;
+    position: relative;
+}
+footer {
+    position: absolute;
+    bottom: 0;
 }

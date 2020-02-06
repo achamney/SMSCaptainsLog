@@ -50,34 +50,31 @@
   </header>
 
   <main role="main" class="row">
-    <div class="col-4" style="background-color:#DDD;box-shadow:8px 0px 8px 0px #999">
+    <div class="col-4 left-col">
       <ul id="phoneList" class="list-group"></ul>
       <input class="form-control" id="newPhone" />
-      <button class="btn btn-primary" onclick="createNewPhone()">+</button>
+      <button class="btn btn-primary" id="addButton" onclick="createNewPhone()">+</button>
+      <footer class="text-muted">
+        <div class="container">
+          <p>SMS Captain's Log is a substitute for MightyText which doesn't allow more than 75 texts per month. Totally
+            ridiculous... </p>
+        </div>
+      </footer>
     </div>
-    <div class="col-8 container" style="padding:10px">
+    <div class="col-8 container messages-container" style="padding:10px">
       <div style="background-color:#007bff;margin-left:-10px;color:white;margin-top:-10px;padding-left:5px">
         <h2 id="activeNumLabel" style="padding:5px"></h2>
       </div>
-      <ul class="list-group" style="padding-right:15px" id="messages">
+      <ul class="list-group" id="messages">
 
       </ul>
       <textarea id="msg" style="width:calc(100% - 15px);height:200px" class="form-control"></textarea>
-      <button class="btn btn-primary" onclick="send()">Send</button>
+      <button class="btn btn-primary sendBtn" onclick="send()">Send</button>
     </div>
 
 
   </main>
 
-  <footer class="text-muted">
-    <div class="container">
-      <p class="float-right">
-        <a href="#">Back to top</a>
-      </p>
-      <p>SMS Captain's Log is a substitute for MightyText which doesn't allow more than 75 texts per month. Totally
-        ridiculous... </p>
-    </div>
-  </footer>
 
   <script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
