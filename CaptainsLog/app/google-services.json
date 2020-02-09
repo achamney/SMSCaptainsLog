@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "14018904254",
+    "firebase_url": "https://smscaptainslog.firebaseio.com",
+    "project_id": "smscaptainslog",
+    "storage_bucket": "smscaptainslog.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:14018904254:android:295083a02c2a6bca61deef",
+        "android_client_info": {
+          "package_name": "com.example.captainslog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "14018904254-qnn0nkls3pvab5sq61b2u1h70hb9vp1j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBD-FKO5s_G0iGzbAc0qepZ4tOm9hpgPuw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "14018904254-qnn0nkls3pvab5sq61b2u1h70hb9vp1j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
