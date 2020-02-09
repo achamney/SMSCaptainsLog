@@ -9,7 +9,7 @@ function send() {
             "password": localStorage.getItem("password")
         });
         var messageList = $("#messages");
-        createMessage(messageList, { Message: encryptedBody, Date: 123, Me: true });
+        createMessage(messageList, { Message: body, Date: 123, Me: true });
     }
 }
 function login() {
@@ -18,9 +18,9 @@ function login() {
     $('#passwordModal').modal('hide')
 }
 function sendAjax(body) {
-    var urlParams = new URLSearchParams(window.location.search);
+    var instanceId = window.phoneData["instanceId"];
     var data = {
-        "to": urlParams.get("key"),
+        "to": instanceId,
         "data": body,
         "priority": "high"
     };
@@ -46,7 +46,8 @@ $(function () {
         $("#passwordModal").modal("show");
     }
     function updateData(first) {
-        $.get("https://api.myjson.com/bins/wm3k2", function (data, textStatus, jqXHR) {
+        var urlParams = new URLSearchParams(window.location.search);
+        $.get("https://api.myjson.com/bins/"+urlParams.get("key"), function (data, textStatus, jqXHR) {
             var phoneList = $("#phoneList");
             var fst;
             window.phoneData = decryptData(data);
@@ -154,21 +155,28 @@ function createMessage(messageList, msg) {
 }
 function createNewPhone() {
     var newPhoneNumber = $("#newPhone").val();
-    if (window.editPhone) {
-        window.phoneData[window.editPhone + "name"] = newPhoneNumber;
-        window.editPhone = false;
-    } else {
-        window.phoneData[newPhoneNumber] = [];
-    }
-    $.ajax({
-        url: "https://api.myjson.com/bins/wm3k2",
-        type: "PUT",
-        data: JSON.stringify(window.phoneData),
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        success: function (data, textStatus, jqXHR) {
-            location.reload();
+    var pass = localStorage.getItem("password");
+    var encryptPhone = CryptoJS.AES.encrypt(newPhoneNumber, pass).toString();
+    var urlParams = new URLSearchParams(window.location.search);
+    
+    $.get("https://api.myjson.com/bins/"+urlParams.get("key"), function (data, textStatus, jqXHR) {
+        if (window.editPhone) {
+            var phoneAlias = window.editPhone+"name";
+            data[CryptoJS.AES.encrypt(phoneAlias, pass).toString()] = newPhoneNumber;
+            window.editPhone = false;
+        } else {
+            data[encryptPhone] = [];
         }
+        $.ajax({
+            url: "https://api.myjson.com/bins/"+urlParams.get("key"),
+            type: "PUT",
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                location.reload();
+            }
+        });
     });
 }
 function editName(num) {
@@ -178,34 +186,40 @@ function editName(num) {
     $("#addButton").html("Save");
     window.editPhone = num;
 }
-function encryptData() {
-    delete window.phoneData['auths'];
-    for (var key in window.phoneData){
-        for (var msg of window.phoneData[key]){
-            msg.Message = CryptoJS.AES.encrypt(msg.Message, localStorage.getItem("password")).toString();
-        }
-    }
-    
-    $.ajax({
-        url: "https://api.myjson.com/bins/wm3k2",
-        type: "PUT",
-        data: JSON.stringify(window.phoneData),
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        success: function (data, textStatus, jqXHR) {
-            location.reload();
-        }
+function writeInstanceId() {
+    var urlParams = new URLSearchParams(window.location.search);
+    $.get("https://api.myjson.com/bins/"+urlParams.get("key"), function (data, textStatus, jqXHR) {
+        $.ajax({
+            url: "https://api.myjson.com/bins/"+urlParams.get("key"),
+            type: "PUT",
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                location.reload();
+            }
+        });
     });
-    return window.phoneData;
     
 }
 function decryptData(mydata) {
+    var pass = localStorage.getItem("password");
     for (var key in mydata){
         for (var msg of mydata[key]){
             if (msg.Message) {
-                msg.Message = CryptoJS.AES.decrypt(msg.Message, localStorage.getItem("password")).toString(CryptoJS.enc.Utf8);
+                msg.Message = CryptoJS.AES.decrypt(msg.Message, pass).toString(CryptoJS.enc.Utf8);
             }
         }
+    }
+    for (var key in mydata) {
+        var decryptKey = CryptoJS.AES.decrypt(key, pass).toString(CryptoJS.enc.Utf8);
+        if (mydata[key] instanceof Array) {
+            mydata[decryptKey] = mydata[decryptKey] || [];
+            mydata[decryptKey] = mydata[decryptKey].concat(mydata[key]);
+        } else {
+            mydata[decryptKey] = mydata[key];
+        }
+        delete mydata[key];
     }
     return mydata;
     
