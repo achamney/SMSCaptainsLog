@@ -1,42 +1,55 @@
 function send() {
-    var urlParams = new URLSearchParams(window.location.search);
     var body = $("#msg").val();
+    var encryptedBody = CryptoJS.AES.encrypt(body, localStorage.getItem("password")).toString();
     if (body && body.length > 0) {
         $("#msg").val("");
-        var data = {
-            "to": urlParams.get("key"),
-            "data": {
-                "address": window.activePhone,
-                "body": body
-            },
-            "priority": "high"
-        };
-        var key = atob("QUl6YVN5Q296VTBXTWVqMUs5eVVab1ZjTU9SeU9BYlpYSVRkTTlz");
-        var url = atob("aHR0cHM6Ly9mY20uZ29vZ2xlYXBpcy5jb20vZmNtL3NlbmQ=")
-        $.ajax({
-            url: url,
-            type: 'post',
-            data: JSON.stringify(data),
-            headers: {
-                "Authorization": 'key=' + key,
-                "Content-Type": "application/json"
-            },
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function (data) {
-                console.info(data);
-            }
+        sendAjax({
+            "address": window.activePhone,
+            "body": body,
+            "password": localStorage.getItem("password")
         });
         var messageList = $("#messages");
-        createMessage(messageList, { Message: body, Date: 123, Me: true });
+        createMessage(messageList, { Message: encryptedBody, Date: 123, Me: true });
     }
 }
+function login() {
+    var password = $("#password").val();
+    localStorage.setItem("password", password);
+    $('#passwordModal').modal('hide')
+}
+function sendAjax(body) {
+    var urlParams = new URLSearchParams(window.location.search);
+    var data = {
+        "to": urlParams.get("key"),
+        "data": body,
+        "priority": "high"
+    };
+    var key = atob("QUl6YVN5Q296VTBXTWVqMUs5eVVab1ZjTU9SeU9BYlpYSVRkTTlz");
+    var url = atob("aHR0cHM6Ly9mY20uZ29vZ2xlYXBpcy5jb20vZmNtL3NlbmQ=")
+    $.ajax({
+        url: url,
+        type: 'post',
+        data: JSON.stringify(data),
+        headers: {
+            "Authorization": 'key=' + key,
+            "Content-Type": "application/json"
+        },
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (data) {
+            console.info(data);
+        }
+    });
+}
 $(function () {
+    if (!localStorage.getItem("password")) {
+        $("#passwordModal").modal("show");
+    }
     function updateData(first) {
         $.get("https://api.myjson.com/bins/wm3k2", function (data, textStatus, jqXHR) {
             var phoneList = $("#phoneList");
             var fst;
-            window.phoneData = data;
+            window.phoneData = decryptData(data);
             phoneList.empty();
             var dataArray = [];
             for (var num in data) {
@@ -68,7 +81,7 @@ $(function () {
     function sortMsgs(a, b) {
         if (!(a.messages instanceof Array) || !(b.messages instanceof Array)
             || a.messages.length == 0 || b.messages.length == 0)
-            return 0;
+            return -1;
         return a.messages[a.messages.length - 1].Date < b.messages[b.messages.length - 1].Date ?
             1 :
             -1
@@ -164,6 +177,38 @@ function editName(num) {
     phoneinput.val("Give Me A Name");
     $("#addButton").html("Save");
     window.editPhone = num;
+}
+function encryptData() {
+    delete window.phoneData['auths'];
+    for (var key in window.phoneData){
+        for (var msg of window.phoneData[key]){
+            msg.Message = CryptoJS.AES.encrypt(msg.Message, localStorage.getItem("password")).toString();
+        }
+    }
+    
+    $.ajax({
+        url: "https://api.myjson.com/bins/wm3k2",
+        type: "PUT",
+        data: JSON.stringify(window.phoneData),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (data, textStatus, jqXHR) {
+            location.reload();
+        }
+    });
+    return window.phoneData;
+    
+}
+function decryptData(mydata) {
+    for (var key in mydata){
+        for (var msg of mydata[key]){
+            if (msg.Message) {
+                msg.Message = CryptoJS.AES.decrypt(msg.Message, localStorage.getItem("password")).toString(CryptoJS.enc.Utf8);
+            }
+        }
+    }
+    return mydata;
+    
 }
 function timeSince(date) {
 

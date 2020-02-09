@@ -1,0 +1,14 @@
+<html>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
+  <script src="aes.js"></script>
+  <script>
+    var urlParams = new URLSearchParams(window.location.search);
+    var messageToEncrypt = urlParams.get("msg");
+    var pw = urlParams.get("pw");
+    var output = CryptoJS.AES.encrypt(body, localStorage.getItem("password")).toString();
+    $("body").html(output);
+  </script>
+  <body>
+
+  </body>
+  </html>
