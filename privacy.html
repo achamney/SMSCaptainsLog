@@ -8,7 +8,7 @@
   <meta name="author" content="">
   <link rel="icon" href="title.png">
 
-  <title>SMSCaptainsLog - Home</title>
+  <title>SMSCaptainsLog - Privacy Policy</title>
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
   <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
@@ -51,55 +51,19 @@
   </header>
 
   <main role="main" class="row">
-    <div class="col-4 left-col">
-      <ul id="phoneList" class="list-group"></ul>
-      <input class="form-control" id="newPhone" />
-      <button class="btn btn-primary" id="addButton" onclick="createNewPhone()">+</button>
-      <footer class="text-muted">
-        <div class="container">
-          <p>SMS Captain's Log is a substitute for MightyText which doesn't allow more than 75 texts per month. Totally
-            ridiculous... </p>
-        </div>
-      </footer>
+    <div class="jumbotron">
+      All messages sent from the user's phone, from the web app, 
+      and sent to the user's phone are uploaded to the cloud and encrypted using AES encryption.
+      This encryption relies on a passcode entered by the user when first starting the app. 
+      The security and safety of your data is based on the strength of this passcode. 
+      Use SMS Captain's Log at your own risk. 
     </div>
-    <div class="col-8 container messages-container" style="padding:10px">
-      <div style="background-color:#007bff;margin-left:-10px;color:white;margin-top:-10px;padding-left:5px">
-        <h2 id="activeNumLabel" style="padding:5px"></h2>
-      </div>
-      <ul class="list-group" id="messages">
-
-      </ul>
-      <textarea id="msg" style="width:calc(100% - 15px);height:200px" class="form-control"></textarea>
-      <button class="btn btn-primary sendBtn" onclick="send()">Send</button>
-    </div>
-
 
   </main>
-  <div class="modal" tabindex="-1" role="dialog" id ="passwordModal">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Enter Your Password</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <p>Please enter your password. To find this, open your app.</p>
-          <input type="password" class="form-control" id="password"/>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" onclick="login()">Log In</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
-  <script src="aes.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
     integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
     crossorigin="anonymous"></script>
-  <script src="app.js"></script>
 </body>
 </htm
