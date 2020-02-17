@@ -1,6 +1,8 @@
 function send() {
     var body = $("#msg").val();
-    var encryptedBody = CryptoJS.AES.encrypt(body, localStorage.getItem("password")).toString();
+    var password = localStorage.getItem("password");
+    var encryptedBody = CryptoJS.AES.encrypt(body, password).toString();
+    var urlParams = new URLSearchParams(window.location.search);
     if (body && body.length > 0) {
         $("#msg").val("");
         sendAjax({
@@ -9,7 +11,21 @@ function send() {
             "password": localStorage.getItem("password")
         });
         var messageList = $("#messages");
-        createMessage(messageList, { Message: body, Date: 123, Me: true });
+        createMessage(messageList, { Message: body, Date: new Date().getTime(), Me: true });
+        var messageKey = phoneData[window.activePhone].MyJson
+        $.get("https://api.myjson.com/bins/"+messageKey, function (data, textStatus, jqXHR) {
+            var encAddress = CryptoJS.AES.encrypt(window.activePhone, password).toString();
+            data.Messages.push({Message: encryptedBody, Date: new Date().getTime(), Me: true});
+            $.ajax({
+                url: "https://api.myjson.com/bins/"+messageKey,
+                type: "PUT",
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data, textStatus, jqXHR) {
+                }
+            });
+        });
     }
 }
 function login() {
@@ -50,42 +66,44 @@ $(function () {
         $.get("https://api.myjson.com/bins/"+urlParams.get("key"), function (data, textStatus, jqXHR) {
             var phoneList = $("#phoneList");
             var fst;
-            window.phoneData = decryptData(data);
+            window.phoneData = decryptAddressData(data);
             phoneList.empty();
             var dataArray = [];
-            for (var num in data) {
-                dataArray.push({ num: num, messages: data[num] });
+            for (var num in phoneData) {
+                if (phoneData[num].Num || phoneData[num].Num == 0)
+                    dataArray.push({phone:num, Num:phoneData[num].Num});
             }
             dataArray.sort((a, b) => sortMsgs(a, b));
-            for (var numMsg of dataArray) {
-                var messages = numMsg.messages;
-                var num = numMsg.num;
-                if (!fst && messages instanceof Array) {
-                    fst = num;
+            for (var key in dataArray) {
+                var num = dataArray[key].Num;
+                if (!fst && (num || num == 0)) {
+                    fst = dataArray[key].phone;
                 }
-                if (messages instanceof Array) {
-                    createPhoneNum(num, phoneList);
+                if (num || num == 0) {
+                    createPhoneNum(dataArray[key].phone, phoneList);
                 }
             }
             if (first) {
-                setActive(fst, data[fst]);
+                setActive(fst, phoneData[fst]);
             } else {
                 styleActiveNumber(activePhone);
             }
-            makeMessages(data[window.activePhone]);
+            if (window.activeMessages && 
+                window.activeMessages.Messages.length > 0 &&
+                activeMessages.Messages.length != phoneData[window.activePhone].Num){
+                makeMessages(phoneData[window.activePhone]);
+            }
             if (first) {
+                makeMessages(phoneData[window.activePhone]);
                 var messageContainer = $("#messages");
                 messageContainer.scrollTop(messageContainer.prop("scrollHeight"));
             }
         });
     }
     function sortMsgs(a, b) {
-        if (!(a.messages instanceof Array) || !(b.messages instanceof Array)
-            || a.messages.length == 0 || b.messages.length == 0)
+        if (!a.Date || !b.Date)
             return -1;
-        return a.messages[a.messages.length - 1].Date < b.messages[b.messages.length - 1].Date ?
-            1 :
-            -1
+        return a.Date < b.Date ? 1 : -1;
     }
     function createPhoneNum(num, phoneList) {
         var label = num;
@@ -101,7 +119,10 @@ $(function () {
             setActive(num, window.phoneData[num]);
         });
     }
-    function setActive(num, messages) {
+    function setActive(num, address) {
+        if (!address){
+            return;
+        }
         styleActiveNumber(num);
         window.activePhone = num;
         var label = num;
@@ -109,24 +130,27 @@ $(function () {
             label = window.phoneData[num + "name"];
         }
         $("#activeNumLabel").html(label);
-        makeMessages(messages);
-        var messageContainer = $("#messages");
-        messageContainer.scrollTop(messageContainer.prop("scrollHeight"));
+        makeMessages(address);
     }
     function styleActiveNumber(num) {
         $('#phoneList .list-group-item').removeClass("active")
         var activePhoneItem = $(`#phoneList .list-group-item[data-id='${num}']`);
         activePhoneItem.addClass("active");
     }
-    function makeMessages(messages) {
-        var messageList = $("#messages");
+    function makeMessages(address) {
+        $.get("https://api.myjson.com/bins/"+address.MyJson, function (data, textStatus, jqXHR) {
+            var messageData = decryptMessageData(data);
+            window.activeMessages = messageData;
+            var messageList = $("#messages");
 
-        if (messages) {
-            messageList.empty();
-            for (var msg of messages) {
-                createMessage(messageList, msg);
+            if (messageData) {
+                messageList.empty();
+                for (var msg of messageData.Messages) {
+                    createMessage(messageList, msg);
+                }
             }
-        }
+            messageList.scrollTop(messageList.prop("scrollHeight"));
+        });
     }
     updateData(true);
     window.setInterval(function () {
@@ -164,11 +188,44 @@ function createNewPhone() {
             var phoneAlias = window.editPhone+"name";
             data[CryptoJS.AES.encrypt(phoneAlias, pass).toString()] = newPhoneNumber;
             window.editPhone = false;
+            updateData(data, urlParams.get("key"));
         } else {
-            data[encryptPhone] = [];
+            $.ajax({
+                url: "https://api.myjson.com/bins/",
+                type: "post",
+                data: JSON.stringify({"Messages":[]}),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (newData, textStatus, jqXHR) {
+                    var newKeys = newData.uri.split("/");
+                    var newKey = newKeys[newKeys.length -1];
+                    data[encryptPhone] = { MyJson: newKey, Date: new Date().getTime() };
+                    updateData(data, urlParams.get("key"));
+                }
+            });
         }
+    });
+}
+function updateData(data, key) {
+    $.ajax({
+        url: "https://api.myjson.com/bins/"+ key,
+        type: "PUT",
+        data: JSON.stringify(data),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (data, textStatus, jqXHR) {
+            location.reload();
+        }
+    });
+}
+function updateData2(data, key) {
+    
+    var urlParams = new URLSearchParams(window.location.search);
+    
+    $.get("https://api.myjson.com/bins/"+urlParams.get("key"), function (data, textStatus, jqXHR) {
+        delete data["U2FsdGVkX181imgZ7+rE2sKUkdF1N9ZnNUcY+YO3kwc="];
         $.ajax({
-            url: "https://api.myjson.com/bins/"+urlParams.get("key"),
+            url: "https://api.myjson.com/bins/"+ urlParams.get("key"),
             type: "PUT",
             data: JSON.stringify(data),
             contentType: "application/json; charset=utf-8",
@@ -186,31 +243,9 @@ function editName(num) {
     $("#addButton").html("Save");
     window.editPhone = num;
 }
-function writeInstanceId() {
-    var urlParams = new URLSearchParams(window.location.search);
-    $.get("https://api.myjson.com/bins/"+urlParams.get("key"), function (data, textStatus, jqXHR) {
-        $.ajax({
-            url: "https://api.myjson.com/bins/"+urlParams.get("key"),
-            type: "PUT",
-            data: JSON.stringify(data),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function (data, textStatus, jqXHR) {
-                location.reload();
-            }
-        });
-    });
-    
-}
-function decryptData(mydata) {
+
+function decryptAddressData(mydata) {
     var pass = localStorage.getItem("password");
-    for (var key in mydata){
-        for (var msg of mydata[key]){
-            if (msg.Message) {
-                msg.Message = CryptoJS.AES.decrypt(msg.Message, pass).toString(CryptoJS.enc.Utf8);
-            }
-        }
-    }
     for (var key in mydata) {
         var decryptKey = CryptoJS.AES.decrypt(key, pass).toString(CryptoJS.enc.Utf8);
         if (mydata[key] instanceof Array) {
@@ -220,6 +255,17 @@ function decryptData(mydata) {
             mydata[decryptKey] = mydata[key];
         }
         delete mydata[key];
+    }
+    return mydata;
+    
+}
+
+function decryptMessageData(mydata) {
+    var pass = localStorage.getItem("password");
+    for (var msg of mydata.Messages) {
+        if (msg.Message) {
+            msg.Message = CryptoJS.AES.decrypt(msg.Message, pass).toString(CryptoJS.enc.Utf8);
+        }
     }
     return mydata;
     
