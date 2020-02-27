@@ -12,6 +12,7 @@ function send() {
         });
         var messageList = $("#messages");
         createMessage(messageList, { Message: body, Date: new Date().getTime(), Me: true });
+        messageList.scrollTop(messageList.prop("scrollHeight"));
         var messageKey = phoneData[window.activePhone].MyJson
         $.get("https://api.myjson.com/bins/"+messageKey, function (data, textStatus, jqXHR) {
             var encAddress = CryptoJS.AES.encrypt(window.activePhone, password).toString();
@@ -71,16 +72,20 @@ $(function () {
             var dataArray = [];
             for (var num in phoneData) {
                 if (phoneData[num].Num || phoneData[num].Num == 0)
-                    dataArray.push({phone:num, Num:phoneData[num].Num});
+                    dataArray.push({phone:num, Num:phoneData[num].Num, Data: window[num+"Data"]});
             }
             dataArray.sort((a, b) => sortMsgs(a, b));
             for (var key in dataArray) {
                 var num = dataArray[key].Num;
+                var address = dataArray[key].phone;
                 if (!fst && (num || num == 0)) {
-                    fst = dataArray[key].phone;
+                    fst = address;
                 }
                 if (num || num == 0) {
-                    createPhoneNum(dataArray[key].phone, phoneList);
+                    createPhoneNum(address, phoneList);
+                    if (first) {
+                        getMessages(address, phoneData[address], function(data) {});
+                    }
                 }
             }
             if (first) {
@@ -101,6 +106,10 @@ $(function () {
         });
     }
     function sortMsgs(a, b) {
+        if (a.Data && b.Data) {
+            return a.Data.Messages[a.Data.Messages.length-1].Date < 
+                    b.Data.Messages[b.Data.Messages.length-1].Date ? 1 : -1;
+        }
         if (!a.Date || !b.Date)
             return -1;
         return a.Date < b.Date ? 1 : -1;
@@ -141,6 +150,7 @@ $(function () {
         $.get("https://api.myjson.com/bins/"+address.MyJson, function (data, textStatus, jqXHR) {
             var messageData = decryptMessageData(data);
             window.activeMessages = messageData;
+            window[address + "Data"] = messageData;
             var messageList = $("#messages");
 
             if (messageData) {
@@ -150,6 +160,14 @@ $(function () {
                 }
             }
             messageList.scrollTop(messageList.prop("scrollHeight"));
+        });
+    }
+    
+    function getMessages(address, myJson, cb) {
+        $.get("https://api.myjson.com/bins/"+myJson.MyJson, function (data, textStatus, jqXHR) {
+            var messageData = decryptMessageData(data);
+            window[address + "Data"] = messageData;
+            cb(messageData);
         });
     }
     updateData(true);
@@ -199,7 +217,7 @@ function createNewPhone() {
                 success: function (newData, textStatus, jqXHR) {
                     var newKeys = newData.uri.split("/");
                     var newKey = newKeys[newKeys.length -1];
-                    data[encryptPhone] = { MyJson: newKey, Date: new Date().getTime() };
+                    data[encryptPhone] = { MyJson: newKey, Date: new Date().getTime(), Num: 0 };
                     updateData(data, urlParams.get("key"));
                 }
             });

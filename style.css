@@ -1,6 +1,11 @@
 html {
     overflow: hidden;
 }
+#phoneList {
+    max-height: 70%;
+    overflow-y: overlay;
+    overflow-x: hidden;
+}
 .messages-container {
     display: flex;
     flex-direction: column;
@@ -26,6 +31,9 @@ margin-left:100px;
 }
 #messages .text-muted {
     font-size: 11px;
+}
+textarea {
+    min-height: 70px;
 }
 .sendBtn {
     width: calc(100% - 15px);
