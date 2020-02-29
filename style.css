@@ -2,7 +2,7 @@ html {
     overflow: hidden;
 }
 #phoneList {
-    max-height: 70%;
+    max-height: 60%;
     overflow-y: overlay;
     overflow-x: hidden;
 }

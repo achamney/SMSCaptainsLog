@@ -5,11 +5,14 @@ function send() {
     var urlParams = new URLSearchParams(window.location.search);
     if (body && body.length > 0) {
         $("#msg").val("");
-        sendAjax({
-            "address": window.activePhone,
-            "body": body,
-            "password": localStorage.getItem("password")
-        });
+        for (var i = 0; i<body.length / 140; i++) {
+            var bodyPacket = body.substr(i * 140, i * 140 + 140);
+            sendAjax({
+                "address": window.activePhone,
+                "body": bodyPacket,
+                "password": localStorage.getItem("password")
+            });
+        }
         var messageList = $("#messages");
         createMessage(messageList, { Message: body, Date: new Date().getTime(), Me: true });
         messageList.scrollTop(messageList.prop("scrollHeight"));
